@@ -16,19 +16,26 @@ jobs:
  
     steps:
     - uses: actions/checkout@v2
-    - name: Install NPM dependencies
-      run: |
-        npm install --production --unsafe-perm
-    - uses: sburris/dependency-check-action@master
-      name: Analyze 3rd party dependencies
+    - name: build-push
+      uses: docker/build-push-action@v1
       with:
-       Project-Name: CrudApp
-    - name: Archive dependency check reports
-      uses: actions/upload-artifact@v1
-      with:
-        name: reports
-        path: reports
-    - name: check current directory
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: docker.io
+        repository: blyseur/mongodb
+        tag_with_sha: true
+    - name: prepare-kustomize
       run: |
-        pwd
-        ls -ltra
+        sed -i "s#IMAGE_NAME#blyseur/mongodb#g" kustomization.yaml
+        sed -i "s/IMAGE_TAG/sha-$(git rev-parse --short HEAD)/g" kustomization.yaml
+    - name: configure-aws
+      run: |
+        aws configure set default.region $AWS_REGION
+        aws configure set default.output json
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set aws_session_token ${{ secrets.AWS_SESSION_TOKEN }}
+    - name: deploy-to-k8s
+      run: |
+        aws eks update-kubeconfig --name testcluster3
+        kubectl kustomize . | kubectl apply -f -
