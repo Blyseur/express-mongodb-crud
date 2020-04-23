@@ -17,10 +17,8 @@ jobs:
  
     steps:
     - uses: actions/checkout@v2
-    - name: Install NPM dependencies
-      run: |
-        npm install --production --unsafe-perm
     - name: use klar
       run: |
-        go get github.com/optiopay/klar
-        CLAIR_ADDR=http://clair.3r1.co:6060 klar postgres:9.5.1
+        wget https://github.com/optiopay/klar/releases/download/v2.4.0/klar-2.4.0-linux-amd64 -O klar
+        chmod +x klar
+        CLAIR_ADDR=http://clair.3r1.co:6060 ./klar postgres:9.5.1
