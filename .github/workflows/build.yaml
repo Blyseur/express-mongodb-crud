@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - clair
 
 env:
   AWS_REGION: us-east-1
@@ -19,16 +20,7 @@ jobs:
     - name: Install NPM dependencies
       run: |
         npm install --production --unsafe-perm
-    - uses: sburris/dependency-check-action@master
-      name: Analyze 3rd party dependencies
-      with:
-       Project-Name: CrudApp
-    - name: Archive dependency check reports
-      uses: actions/upload-artifact@v1
-      with:
-        name: reports
-        path: reports
-    - name: check current directory
+    - name: use klar
       run: |
-        pwd
-        ls -ltra
+        go get github.com/optiopay/klar
+        CLAIR_ADDR=http://clair.3r1.co:6060 klar postgres:9.5.1
